@@ -86,10 +86,10 @@ class WebScraper:
         self.driver.find_element_by_css_selector('[class="accordion"]').click()
         self.driver.find_element_by_css_selector('[id="campoDataDeposito1"]').send_keys(
             Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT,
-            Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, '01012020')
+            Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, '01012019')
         self.driver.find_element_by_css_selector('[id="campoDataDeposito2"]').send_keys(
             Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT,
-            Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, '31122020')
+            Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, '01122021')
 
     def change_reg_per_page(self):
         select = Select(self.driver.find_element_by_name('RegisterPerPage'))
