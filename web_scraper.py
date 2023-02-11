@@ -1,5 +1,6 @@
 # coding=utf8
 import logging
+from datetime import datetime
 import pandas as pd
 import numpy as np
 from selenium import webdriver
@@ -11,6 +12,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 # noinspection PyArgumentEqualDefault
@@ -18,7 +21,7 @@ class WebScraper:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        file_handler = logging.FileHandler(f'logs/web_scraper.log', mode='w')
+        file_handler = logging.FileHandler(f'web-scraper-inpi/logs/web_scraper_{datetime.date(datetime.now())}.log', mode='w')
         self.logger.addHandler(file_handler)
         self.logger.setLevel(logging.DEBUG)
         log_format = '%(name)s:%(levelname)s %(asctime)s -  %(message)s'
@@ -31,8 +34,8 @@ class WebScraper:
         self.chrome_options.add_argument('window-size=400,800')
         # self.chrome_options.add_argument('--headless')
         self.driver_url = 'https://busca.inpi.gov.br/pePI/jsp/patentes/PatenteSearchAvancado.jsp'
-        self.driver = webdriver.Chrome(options=self.chrome_options, desired_capabilities=capa)
-        self.wait = WebDriverWait(self.driver, 20)
+        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=self.chrome_options, desired_capabilities=capa)
+        self.wait = WebDriverWait(self.driver, 60)
 
         pd.options.display.max_columns = 100
         pd.options.display.max_rows = 100
@@ -53,6 +56,7 @@ class WebScraper:
         self.navigate_pages()
         self.scrape_site()
         self.close_browser()
+        self.create_dataframe_csv()
 
     def open_browser(self):
         self.logger.debug('Opening Browser')
@@ -64,7 +68,7 @@ class WebScraper:
     def click_continuar(self):
         self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '[class="marcador"] > a')))
         self.driver.execute_script("window.stop();")
-        self.driver.find_element_by_css_selector('[class="marcador"] > a').click()
+        self.driver.find_element(By.CSS_SELECTOR, '[class="marcador"] > a').click()
 
     def close_1st_tab(self):
         self.driver.close()
@@ -73,30 +77,30 @@ class WebScraper:
     def click_patente(self):
         self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '[data-mce-href="menu-servicos/patente"]')))
         self.driver.execute_script("window.stop();")
-        self.driver.find_element_by_css_selector('[data-mce-href="menu-servicos/patente"]').click()
+        self.driver.find_element(By.CSS_SELECTOR, '[data-mce-href="menu-servicos/patente"]').click()
 
     def click_pesquisa_avancada(self):
         self.wait.until(EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'Pesquisa Avançada')]")))
         self.driver.execute_script("window.stop();")
-        self.driver.find_element_by_xpath("//*[contains(text(), 'Pesquisa Avançada')]").click()
+        self.driver.find_element(By.XPATH, "//*[contains(text(), 'Pesquisa Avançada')]").click()
 
     def fill_date_form(self):
         self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '[class="accordion"]')))
         self.driver.execute_script("window.stop();")
-        self.driver.find_element_by_css_selector('[class="accordion"]').click()
-        self.driver.find_element_by_css_selector('[id="campoDataDeposito1"]').send_keys(
+        self.driver.find_element(By.CSS_SELECTOR, '[class="accordion"]').click()
+        self.driver.find_element(By.CSS_SELECTOR, '[id="campoDataDeposito1"]').send_keys(
             Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT,
             Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, '01012019')
-        self.driver.find_element_by_css_selector('[id="campoDataDeposito2"]').send_keys(
+        self.driver.find_element(By.CSS_SELECTOR, '[id="campoDataDeposito2"]').send_keys(
             Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT,
             Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, Keys.ARROW_LEFT, '01122021')
 
     def change_reg_per_page(self):
-        select = Select(self.driver.find_element_by_name('RegisterPerPage'))
+        select = Select(self.driver.find_element(By.NAME, 'RegisterPerPage'))
         select.select_by_value('100')
 
     def click_pesquisar(self):
-        self.driver.find_element_by_css_selector('[value=" pesquisar » "]').click()
+        self.driver.find_element(By.CSS_SELECTOR, '[value=" pesquisar » "]').click()
 
     def navigate_pages(self):
         self.click_continuar()
@@ -116,13 +120,13 @@ class WebScraper:
     def open_link(self, card):
         link = card.find_element(By.CSS_SELECTOR, "tr > td > font > a")
         link.send_keys(Keys.CONTROL + Keys.RETURN)
-        self.driver.find_element_by_tag_name('body').send_keys(Keys.CONTROL + Keys.TAB)
+        self.driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.CONTROL + Keys.TAB)
         self.driver.switch_to.window(self.driver.window_handles[1])
 
     def get_first_table(self):
         self.wait.until(
             EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'Rua Mayrink Veiga, 9')]")))
-        first_table = self.driver.find_element_by_css_selector('table[width="780px"][border="0"]')
+        first_table = self.driver.find_element(By.CSS_SELECTOR, 'table[width="780px"][border="0"]')
         ft_feats = first_table.find_elements(By.TAG_NAME, "tr")
         ft_feats = ft_feats[1:]
         for feat in ft_feats:
@@ -227,5 +231,5 @@ class WebScraper:
     def create_dataframe_csv(self):
         self.logger.debug('Creating csv file')
         self.df = self.df.drop_duplicates()
-        self.df.to_csv(f'.csv files/dataframe.csv')
+        self.df.to_csv(f'web-scraper-inpi/.csv files/dataframe_{datetime.date(datetime.now())}.csv')
         self.logger.debug(f'dataframe.csv file created')
